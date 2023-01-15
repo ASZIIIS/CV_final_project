@@ -3,6 +3,10 @@ import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QMessageBox
 from PyQt5.QtGui import QPixmap
+import warnings
+import os
+import tensorflow as tf
+from deepface import DeepFace
 
 imgNamepath = None
 
@@ -46,11 +50,11 @@ class Ui_MainWindow(object):
         self.label1 = QtWidgets.QLabel(self.centralwidget)
         self.label1.setGeometry(QtCore.QRect(50, 180, 800, 250))
         self.label1.setStyleSheet("border-width:0px;\n"
-                                 "border-style:solid;\n"
-                                 "border-color:rgb(50, 50, 50);\n"
-                                 "font:50 13pt \"Segoe Print\";\n"
-                                 "\n"
-                                 "color:rgb(101,153,26)")
+                                  "border-style:solid;\n"
+                                  "border-color:rgb(50, 50, 50);\n"
+                                  "font:50 13pt \"Segoe Print\";\n"
+                                  "\n"
+                                  "color:rgb(101,153,26)")
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -69,7 +73,9 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "CS308 project"))
         self.pushButton.setText(_translate("MainWindow", "Continue"))
         self.label.setText(_translate("MainWindow", "Welcome!!!"))
-        self.label1.setText(_translate("MainWindow", "This is a face recognition system based on FaceNet512.\n Input images/videos with faces for recognition!\n\n\nReference: https://github.com/serengil/deepface"))
+        self.label1.setText(_translate("MainWindow",
+                                       "This is a face recognition system based on FaceNet512.\n Input images/videos with faces for recognition!\n\n\nReference: https://github.com/serengil/deepface"))
+
 
 class Ui_MainWindow2(object):
     def setupUi(self, MainWindow):
@@ -191,7 +197,7 @@ class Ui_MainWindow2(object):
 
         # 按钮关联函数
         self.pushButton_2.clicked.connect(self.openImage)
-        self.pushButton_3.clicked.connect(self.startAction)
+        self.pushButton_3.clicked.connect(self.startAction1)
         self.pushButton_4.clicked.connect(self.saveImage)
 
     def retranslateUi(self, MainWindow):
@@ -236,7 +242,7 @@ class Ui_MainWindow2(object):
         img.save(fpath)
 
     # ToDo: 调用模型辨别并显示结果
-    def startAction(self):
+    def startAction1(self):  # 检测数据库中是否存在这个人
         img = None
         if imgNamepath[-3:] == 'mp4':
             vc = cv2.VideoCapture(imgNamepath)
@@ -260,23 +266,63 @@ class Ui_MainWindow2(object):
         else:
             img = cv2.imread(imgNamepath)
         print('Loading model...')
-        img = cv2.resize(img, dsize=(768, 1080))
-        # 图像转灰度图像
-        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # 灰度图像到反转灰度图像
-        inverted_gray_image = 255 - gray_image
-        # 模糊倒置灰度图像
-        blurred_inverted_gray_image = cv2.GaussianBlur(inverted_gray_image, (19, 19), 0)
-        # 反转模糊图像
-        inverted_blurred_image = 255 - blurred_inverted_gray_image
-        # 准备照片素描
-        image = cv2.divide(gray_image, inverted_blurred_image, scale=256.0)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format_RGB888)
-        imgShow = QtGui.QPixmap(image).scaled(self.label_4.width(), self.label_4.height())
+        df = DeepFace.find(img_path=imgNamepath, db_path="dataset", model_name="Facenet")
+        print(df.head())
+        print(len(df.values))
+        if len(df.values) > 0:
+            if len(df.values) > 1:
+                img = QtGui.QPixmap(df.values[1][0]).scaled(self.label_4.width(), self.label_4.height())
+                self.label_4.setPixmap(img)
+            else:
+                img = QtGui.QPixmap(df.values[0][0]).scaled(self.label_4.width(), self.label_4.height())
+                self.label_4.setPixmap(img)
 
-        self.label_4.setScaledContents(True)
-        self.label_4.setPixmap(imgShow)
+        else:
+            img = QtGui.QPixmap('sorry.png').scaled(self.label_4.width(), self.label_4.height())
+            self.label_4.setPixmap(img)
+
+    def startAction2(self):  # 检测两个人是否相同
+        img = None
+        if imgNamepath[-3:] == 'mp4':
+            vc = cv2.VideoCapture(imgNamepath)
+            # n = 1  # 计数
+            if vc.isOpened():  # ToDo:这里先只写了读视频的第一帧
+                rval, frame = vc.read()
+                img = frame
+
+            vc.release()
+        else:
+            img = cv2.imread(imgNamepath)
+        print('Loading model...')
+        # 需要两个图片路径作为输入
+
+    def startAction3(self):  # 检测人物性别等信息
+        img = None
+        if imgNamepath[-3:] == 'mp4':
+            vc = cv2.VideoCapture(imgNamepath)
+            # n = 1  # 计数
+            if vc.isOpened():  # ToDo:这里先只写了读视频的第一帧
+                rval, frame = vc.read()
+                img = frame
+
+            vc.release()
+        else:
+            img = cv2.imread(imgNamepath)
+        print('Loading model...')
+        demography = DeepFace.analyze(img, ['age', 'gender', 'race', 'emotion'])
+
+        # check response is a valid json
+        print("Age: ", demography["age"])
+        print("Gender: ", demography["dominant_gender"])
+        print("Race: ", demography["dominant_race"])
+        print("Emotion: ", demography["dominant_emotion"])
+        # print(df.values[0][0])
+        age = demography["age"]
+        gender = demography["dominant_gender"]
+        race = demography["dominant_race"]
+        emotion = demography["dominant_emotion"]
+        # 需要四个text
+        return age, gender, race, emotion
 
 
 class FirstWindowActions(Ui_MainWindow, QMainWindow):
