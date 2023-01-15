@@ -28,7 +28,7 @@ class Ui_MainWindow(object):
         self.label_3.setStyleSheet("font:32px;")
         self.label_3.setObjectName("label_3")
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(370, 410, 181, 51))
+        self.pushButton.setGeometry(QtCore.QRect(370, 450, 181, 51))
         self.pushButton.setStyleSheet("color:rgb(101,153,26);\n"
                                       "background-color:rgb(198,224,205);\n"
                                       "hover{color:red};\n"
@@ -44,11 +44,11 @@ class Ui_MainWindow(object):
                                  "\n"
                                  "color:rgb(255, 170, 0)")
         self.label1 = QtWidgets.QLabel(self.centralwidget)
-        self.label1.setGeometry(QtCore.QRect(50, 180, 800, 200))
+        self.label1.setGeometry(QtCore.QRect(50, 180, 800, 250))
         self.label1.setStyleSheet("border-width:0px;\n"
                                  "border-style:solid;\n"
                                  "border-color:rgb(50, 50, 50);\n"
-                                 "font:30px;\n"
+                                 "font:50 13pt \"Segoe Print\";\n"
                                  "\n"
                                  "color:rgb(101,153,26)")
 
@@ -270,11 +270,11 @@ class Ui_MainWindow2(object):
         # 反转模糊图像
         inverted_blurred_image = 255 - blurred_inverted_gray_image
         # 准备照片素描
-        sketck = cv2.divide(gray_image, inverted_blurred_image, scale=256.0)
-        # 因为不知道怎么将<class 'numpy.ndarray'>转换为<class 'PyQt5.QtGui.QPixmap'>类型，因此采用暂存再读出的方式
-        cv2.imwrite('ZC.jpg', sketck)
-        # pyqt5从路径读取图片
-        imgShow = QPixmap('ZC.jpg').scaled(self.label_4.width(), self.label_4.height())
+        image = cv2.divide(gray_image, inverted_blurred_image, scale=256.0)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format_RGB888)
+        imgShow = QtGui.QPixmap(image).scaled(self.label_4.width(), self.label_4.height())
+
         self.label_4.setScaledContents(True)
         self.label_4.setPixmap(imgShow)
 
