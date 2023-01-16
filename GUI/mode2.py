@@ -15,6 +15,8 @@ HEIGHT = 421
 
 class Compare(object):
     def setupUi(self, MainWindow):
+        self.img1 = None
+        self.img2 = None
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(994, 783)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -165,34 +167,37 @@ class Compare(object):
 
     # 选择本地图片上传
     def openImage(self, type):
+        self.output.setText("")
         global img_path1,img_path2
         img_path, img_type = QFileDialog.getOpenFileName(self.centralwidget)
+        image = None
         img = None
         if img_path[-3:] == 'mp4':
             vc = cv2.VideoCapture(img_path)
             if vc.isOpened():
                 rval, frame = vc.read()
+                image = frame
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
-                img = QtGui.QPixmap(image).scaled(WIDTH, HEIGHT)
+                im = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
+                img = QtGui.QPixmap(im).scaled(WIDTH, HEIGHT)
             vc.release()
         else:
+            image = cv2.imread(img_path)
             img = QtGui.QPixmap(img_path).scaled(WIDTH, HEIGHT)
         if type == 1:
             img_path1 = img_path
+            self.img1 = image
             self.label_3.setPixmap(img)
             self.lineEdit_3.setText(img_path1)
         else:
             img_path2 = img_path
+            self.img2 = image
             self.label_4.setPixmap(img)
             self.lineEdit_4.setText(img_path2)
 
-    # ToDo: 调用模型辨别并显示结果
     def startAction(self):
-
-        flag = False #相同就True
-
-        res = DeepFace.verify(img_path1, img_path2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean", enforce_detection=False)
+        flag = False  # 相同就True
+        res = DeepFace.verify(self.img1, self.img2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean", enforce_detection=False)
         print(res)
         if res['verified'] == True:
             flag = True
@@ -202,10 +207,9 @@ class Compare(object):
             confidence = (res['distance']-10)/10
             confidence += 0.9*(1-confidence)
 
-
         if flag:
-            self.output.setText("They are the Same person. Confidence:"+str(confidence))
+            self.output.setText("They are the Same person.    Confidence:"+str(round(confidence,3)*100)+"%")
         else:
-            self.output.setText("They are not the Same person. Confidence:"+str(confidence))
+            self.output.setText("They are not the Same person.    Confidence:"+str(round(confidence,3)*100)+"%")
 
 

@@ -1,10 +1,10 @@
 import sys
-import cv2
 from PyQt5 import QtCore,QtWidgets
+from PyQt5.QtGui import QPalette, QBrush, QPixmap
 from PyQt5.QtWidgets import QApplication, QMainWindow
-from mode1 import RecognizeInDB
-from mode2 import Compare
-from mode3 import FaceAnalysis
+from GUI.mode1 import RecognizeInDB
+from GUI.mode2 import Compare
+from GUI.mode3 import FaceAnalysis
 
 
 class Ui_MainWindow(object):
@@ -12,10 +12,9 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(943, 641)
         # 给MainWindow设置背景图片
-        # palette = QPalette()
-        # palette.setBrush(QPalette.Background, QBrush(QPixmap('D:\\python\\RRJ\\pycharmproject\\Practice\\chep2\\bdd'
-        #                                                      '\\background3.jpg')))
-        # MainWindow.setPalette(palette)
+        palette = QPalette()
+        palette.setBrush(QPalette.Background, QBrush(QPixmap('GUI\\vgg.jpg')))
+        MainWindow.setPalette(palette)
 
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -90,7 +89,7 @@ class Ui_MainWindow(object):
         self.pushButton3.setText(_translate("MainWindow", "Face Analysis"))
         self.label.setText(_translate("MainWindow", "Welcome!!!"))
         self.label1.setText(_translate("MainWindow",
-                                       "This is a face recognition system based on FaceNet512.\n Select a mode and input images/videos with faces!!\n\n\nReference: https://github.com/serengil/deepface"))
+                                       "This is a face recognition system based on FaceNet.\n Select a mode and input images/videos with faces!!\n\n\nReference: https://github.com/serengil/deepface"))
 
 
 class FirstWindowActions(Ui_MainWindow, QMainWindow):

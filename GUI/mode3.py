@@ -1,16 +1,17 @@
 import sys
+sys.path.append('..')
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QMessageBox
 from deepface import DeepFace
 
-from util import getFaceFrame
 
 imgNamePath = None
 
 
 class FaceAnalysis(object):
     def setupUi(self, MainWindow):
+        self.img=None
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(994, 783)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -154,6 +155,11 @@ class FaceAnalysis(object):
 
     # 选择本地图片上传
     def openImage(self):
+        self.label_3.clear()
+        self.age.setText("Age: ")
+        self.gender.setText("Gender: ")
+        self.race.setText("Race: ")
+        self.emotion.setText("Emotion: ")
         global imgNamepath
         imgNamepath, imgType = QFileDialog.getOpenFileName(self.centralwidget)
         # 通过文件路径获取图片文件，并设置图片长宽为label控件的长、宽
@@ -162,24 +168,21 @@ class FaceAnalysis(object):
             vc = cv2.VideoCapture(imgNamepath)
             if vc.isOpened():
                 rval, frame = vc.read()
+                self.img=frame
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 image = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
                 img = QtGui.QPixmap(image).scaled(self.label_3.width(), self.label_3.height())
             vc.release()
         else:
+            self.img=cv2.imread(imgNamepath)
             img = QtGui.QPixmap(imgNamepath).scaled(self.label_3.width(), self.label_3.height())
         self.label_3.setPixmap(img)
         self.lineEdit_3.setText(imgNamepath)
 
     # ToDo: 调用模型辨别并显示结果
     def startAction(self):
-        img = None
-        if imgNamepath[-3:] == 'mp4':
-            img = getFaceFrame(imgNamePath)
-        else:
-            img = cv2.imread(imgNamepath)
         print('Loading model...')
-        demography = DeepFace.analyze(img, enforce_detection=False)
+        demography = DeepFace.analyze(self.img, enforce_detection=False)
         print(demography)
         age = demography["age"]
         print(age)

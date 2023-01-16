@@ -1,4 +1,5 @@
 import sys
+sys.path.append('..')
 import cv2
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ imgNamepath = None
 
 class RecognizeInDB(object):
     def setupUi(self, MainWindow):
+        self.img = None
         MainWindow.setObjectName("MainWindow")
 
         MainWindow.resize(994, 783)
@@ -155,6 +157,9 @@ class RecognizeInDB(object):
 
     # 选择本地图片上传
     def openImage(self):
+        self.info.setText('')
+        self.label_3.clear()
+        self.label_4.clear()
         global imgNamepath  # 这里为了方便别的地方引用图片路径，将其设置为全局变量
         # 弹出一个文件选择框，第一个返回值imgName记录选中的文件路径+文件名，第二个返回值imgType记录文件的类型
         # QFileDialog就是系统对话框的那个类第一个参数是上下文，第二个参数是弹框的名字，第三个参数是默认打开的路径，第四个参数是需要的格式
@@ -165,37 +170,37 @@ class RecognizeInDB(object):
             vc = cv2.VideoCapture(imgNamepath)
             if vc.isOpened():
                 rval, frame = vc.read()
+                self.img = frame
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 image = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
                 img = QtGui.QPixmap(image).scaled(self.label_3.width(), self.label_3.height())
             vc.release()
         else:
+            self.img = cv2.imread(imgNamepath)
             img = QtGui.QPixmap(imgNamepath).scaled(self.label_3.width(), self.label_3.height())
         self.label_3.setPixmap(img)
         self.lineEdit_3.setText(imgNamepath)
 
     # 保存图片到本地(第二种方式:首先提取相对应Qlabel中的图片，然后打开一个保存文件的弹出框，最后保存图片到选中的路径)
     def saveImage(self):
-        # 提取Qlabel中的图片
         img = self.label_4.pixmap().toImage()
         fpath, ftype = QFileDialog.getSaveFileName(self.centralwidget)
         img.save(fpath)
 
-    # ToDo: 调用模型辨别并显示结果
+    #调用模型辨别并显示结果
     def startAction(self):
-
         print('Loading model...')
         classID="Class_ID: "
         name="Name: "
         sample_num="Sample_Num: "
         flag="Flag: "
         gender="Gender: "
-        ########ToDo:用img匹配数据集中的人并把图片赋给img_in_db  #########################
-        df = DeepFace.find(img_path=imgNamepath, db_path="../tests/test_small", model_name="Facenet", enforce_detection=False, distance_metric="euclidean")
+        ########用img匹配数据集中的人并把图片赋给img_in_db#########################
+        df = DeepFace.find(self.img, db_path="./tests/test_small", model_name="Facenet", enforce_detection=False, distance_metric="euclidean")
         if len(df.values) > 0:
             identity_num = df.values[0][0].split('\\')[1].split('/')[0]
             print(df.values[0][0].split('\\')[1].split('/')[0])
-            identity = pd.read_csv("../tests/identity.csv")
+            identity = pd.read_csv("./tests/identity.csv")
             identity = np.array(identity)
             for i in range(len(identity)):
                 if identity[i][0] == identity_num:
@@ -217,9 +222,10 @@ class RecognizeInDB(object):
             else:
                 img = QtGui.QPixmap(df.values[0][0]).scaled(self.label_4.width(), self.label_4.height())
                 self.label_4.setPixmap(img)
+            self.info.setText(
+                "Personal information in database\n" + classID + "\n" + name + "\n" + sample_num + "\n" + flag + "\n" + gender + "\n")
 
         else:
-            img = QtGui.QPixmap('sorry.png').scaled(self.label_4.width(), self.label_4.height())
+            img = QtGui.QPixmap('./GUI/sorry.png').scaled(self.label_4.width(), self.label_4.height())
             self.label_4.setPixmap(img)
 
-        self.info.setText("Personal information in database\n"+classID+"\n"+name+"\n"+sample_num+"\n"+flag+"\n"+gender+"\n")
