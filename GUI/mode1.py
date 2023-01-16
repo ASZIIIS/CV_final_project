@@ -217,13 +217,12 @@ class RecognizeInDB(object):
                     print(gender)
                     break
             if len(df.values) > 1:
-                img = QtGui.QPixmap(df.values[1][0]).scaled(self.label_4.width(), self.label_4.height())
+                img = QtGui.QPixmap(df.values[1][0][1:]).scaled(self.label_4.width(), self.label_4.height())
                 self.label_4.setPixmap(img)
             else:
-                img = QtGui.QPixmap(df.values[0][0]).scaled(self.label_4.width(), self.label_4.height())
+                img = QtGui.QPixmap(df.values[0][0][1:]).scaled(self.label_4.width(), self.label_4.height())
                 self.label_4.setPixmap(img)
-            self.info.setText(
-                "Personal information in database\n" + classID + "\n" + name + "\n" + sample_num + "\n" + flag + "\n" + gender + "\n")
+            self.info.setText("Personal information in database\n" + classID + "\n" + name + "\n" + sample_num + "\n" + flag + "\n" + gender + "\n")
 
         else:
             img = QtGui.QPixmap('./GUI/sorry.png').scaled(self.label_4.width(), self.label_4.height())
