@@ -1,9 +1,12 @@
 import sys
+from cmath import e
+
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QMessageBox
-from util import getFaceFrame
-from PyQt5.QtGui import QPixmap
+from deepface import DeepFace
+
+
 
 img_path1 = None
 img_path2 = None
@@ -186,24 +189,23 @@ class Compare(object):
 
     # ToDo: 调用模型辨别并显示结果
     def startAction(self):
-        img1 = None
-        img2 = None
-        if img_path1[-3:] == 'mp4':
-            img1 = getFaceFrame(img_path1)
-        else:
-            img1 = cv2.imread(img_path1)
-        if img_path2[-3:] == 'mp4':
-            img2 = getFaceFrame(img_path2)
-        else:
-            img2 = cv2.imread(img_path2)
-        print('Loading model...')
+
         flag = False #相同就True
-        print('herer')
-        # Model here!!!!!!!!!!!!!!!!!!
+
+        res = DeepFace.verify(img_path1, img_path2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean")
+        print(res)
+        if res['verified'] == True:
+            flag = True
+            confidence = 1/e**(res['distance']/10)
+            confidence += 0.9*(1-confidence)
+        else:
+            confidence = (res['distance']-10)/10
+            confidence += 0.9*(1-confidence)
+
 
         if flag:
-            self.output.setText("They are the Same person. Confidence:")
+            self.output.setText("They are the Same person. Confidence:"+str(confidence))
         else:
-            self.output.setText("They are not the Same person. Confidence:")
+            self.output.setText("They are not the Same person. Confidence:"+str(confidence))
 
 

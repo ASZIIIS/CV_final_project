@@ -1,9 +1,11 @@
 import sys
 import cv2
+import numpy as np
+import pandas as pd
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QMessageBox
-from util import getFaceFrame
-from PyQt5.QtGui import QPixmap
+from deepface import DeepFace
+
 
 imgNamepath = None
 
@@ -181,34 +183,43 @@ class RecognizeInDB(object):
 
     # ToDo: 调用模型辨别并显示结果
     def startAction(self):
-        img = None
-        if imgNamepath[-3:] == 'mp4':
-            img = getFaceFrame(imgNamepath)
-        else:
-            img = cv2.imread(imgNamepath)
+
         print('Loading model...')
         classID="Class_ID: "
         name="Name: "
-        sample_num="Sample_Num:"
+        sample_num="Sample_Num: "
         flag="Flag: "
         gender="Gender: "
         ########ToDo:用img匹配数据集中的人并把图片赋给img_in_db  #########################
-        img = cv2.resize(img, dsize=(768, 1080))
-        # 图像转灰度图像
-        gray_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        # 灰度图像到反转灰度图像
-        inverted_gray_image = 255 - gray_image
-        # 模糊倒置灰度图像
-        blurred_inverted_gray_image = cv2.GaussianBlur(inverted_gray_image, (19, 19), 0)
-        # 反转模糊图像
-        inverted_blurred_image = 255 - blurred_inverted_gray_image
-        # 准备照片素描
-        img_in_db = cv2.divide(gray_image, inverted_blurred_image, scale=256.0)
-        ####################################################################################
-        image = cv2.cvtColor(img_in_db, cv2.COLOR_BGR2RGB)
-        image = QtGui.QImage(image, image.shape[1], image.shape[0], QtGui.QImage.Format_RGB888)
-        imgShow = QtGui.QPixmap(image).scaled(self.label_4.width(), self.label_4.height())
+        df = DeepFace.find(img_path=imgNamepath, db_path="../tests/test_small", model_name="Facenet", enforce_detection=False, distance_metric="euclidean")
+        if len(df.values) > 0:
+            identity_num = df.values[0][0].split('\\')[1].split('/')[0]
+            print(df.values[0][0].split('\\')[1].split('/')[0])
+            identity = pd.read_csv("../tests/identity.csv")
+            identity = np.array(identity)
+            for i in range(len(identity)):
+                if identity[i][0] == identity_num:
+                    print(identity[i])
+                    classID += identity[i][0]
+                    print(classID)
+                    name += identity[i][1].split('"')[1]
+                    print(name)
+                    sample_num += str(identity[i][2])
+                    print(sample_num)
+                    flag += str(identity[i][3])
+                    print(flag)
+                    gender += str(identity[i][4])
+                    print(gender)
+                    break
+            if len(df.values) > 1:
+                img = QtGui.QPixmap(df.values[1][0]).scaled(self.label_4.width(), self.label_4.height())
+                self.label_4.setPixmap(img)
+            else:
+                img = QtGui.QPixmap(df.values[0][0]).scaled(self.label_4.width(), self.label_4.height())
+                self.label_4.setPixmap(img)
+
+        else:
+            img = QtGui.QPixmap('sorry.png').scaled(self.label_4.width(), self.label_4.height())
+            self.label_4.setPixmap(img)
 
         self.info.setText("Personal information in database\n"+classID+"\n"+name+"\n"+sample_num+"\n"+flag+"\n"+gender+"\n")
-        self.label_4.setScaledContents(True)
-        self.label_4.setPixmap(imgShow)

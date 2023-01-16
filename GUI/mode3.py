@@ -2,6 +2,8 @@ import sys
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QFileDialog, QMessageBox
+from deepface import DeepFace
+
 from util import getFaceFrame
 
 imgNamePath = None
@@ -27,7 +29,6 @@ class FaceAnalysis(object):
         self.back.setGeometry(QtCore.QRect(20, 10, 80, 35))
         self.back.setStyleSheet("font:22px;")
         self.back.setObjectName("pushButton_2")
-
 
         self.pushButton_2 = QtWidgets.QPushButton(self.centralwidget)  # select pic/vid
         self.pushButton_2.setGeometry(QtCore.QRect(30, 150, 230, 41))
@@ -91,7 +92,6 @@ class FaceAnalysis(object):
         self.emotion.setGeometry(QtCore.QRect(540, 585, 401, 100))
         self.emotion.setStyleSheet("font:32px;")
         self.emotion.setText("Emotion:")
-
 
         self.label_5 = QtWidgets.QLabel(self.centralwidget)
         self.label_5.setGeometry(QtCore.QRect(220, 230, 91, 31))
@@ -179,12 +179,18 @@ class FaceAnalysis(object):
         else:
             img = cv2.imread(imgNamepath)
         print('Loading model...')
-        age = 18
-        gender = "Male"
-        race = "Yellow"
-        emotion = "Happy"
+        demography = DeepFace.analyze(img, enforce_detection=False)
+        print(demography)
+        age = demography["age"]
+        print(age)
+        gender = str(demography["gender"])
+        print(gender)
+        race = str(demography["dominant_race"])
+        print(race)
+        emotion = str(demography["dominant_emotion"])
+        print(emotion)
 
-        self.age.setText("Age: "+str(age))
-        self.gender.setText("Gender: "+str(gender))
-        self.race.setText("Race: "+str(race))
-        self.emotion.setText("Emotion: "+str(emotion))
+        self.age.setText("Age: " + str(age))
+        self.gender.setText("Gender: " + str(gender))
+        self.race.setText("Race: " + str(race))
+        self.emotion.setText("Emotion: " + str(emotion))
