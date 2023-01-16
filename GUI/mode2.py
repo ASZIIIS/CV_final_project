@@ -196,20 +196,15 @@ class Compare(object):
             self.lineEdit_4.setText(img_path2)
 
     def startAction(self):
-        flag = False  # 相同就True
         res = DeepFace.verify(self.img1, self.img2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean", enforce_detection=False)
         print(res)
         if res['verified'] == True:
-            flag = True
             confidence = 1/e**(res['distance']/10)
             confidence += 0.9*(1-confidence)
+            self.output.setText("They are the Same person.         Confidence:"+str(round(confidence*100,2))+"%")
         else:
             confidence = (res['distance']-10)/10
             confidence += 0.9*(1-confidence)
-
-        if flag:
-            self.output.setText("They are the Same person.    Confidence:"+str(round(confidence,3)*100)+"%")
-        else:
-            self.output.setText("They are not the Same person.    Confidence:"+str(round(confidence,3)*100)+"%")
+            self.output.setText("They are not the Same person.     Confidence:"+str(round(confidence*100,2))+"%")
 
 
