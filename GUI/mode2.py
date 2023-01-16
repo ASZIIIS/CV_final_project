@@ -192,7 +192,7 @@ class Compare(object):
 
         flag = False #相同就True
 
-        res = DeepFace.verify(img_path1, img_path2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean")
+        res = DeepFace.verify(img_path1, img_path2, detector_backend='opencv', model_name="Facenet", distance_metric="euclidean", enforce_detection=False)
         print(res)
         if res['verified'] == True:
             flag = True
